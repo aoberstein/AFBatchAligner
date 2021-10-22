@@ -30,7 +30,7 @@ def filterPDB(file, cutoff):
 
     id = os.path.basename(file).rstrip(".pdb")
     outPrefix = file.rstrip(".pdb")+"_bFILT-"+str(cutoff)+".pdb"
-    print("[OUTPUT]: "+outPrefix)
+    # print("[OUTPUT]: "+outPrefix)
     pdb = PDBParser().get_structure(id, file)
     io = PDBIO()
     io.set_structure(pdb)
@@ -92,7 +92,8 @@ def jFatCatAlign(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
         os.mkdir(outputDir, mode = 0o755)
 
     proc = subprocess.Popen([javaFullPath, '-jar', aoFatCatJar,
-                             queryPDB, targetPDB, str(alignmentCutoff), outputDir])
+                             queryPDB, targetPDB, str(alignmentCutoff), outputDir],
+                            bufsize=-1)
     code=proc.wait()
     if str(code) == '0':
         print("[jFatCatAlign]: Success")
@@ -124,7 +125,7 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
         batchName = "b"+str(b)
         batchDict[batchName] = lines2[i:i + cores]
         b = b + 1
-    print(batchDict)
+    # print(batchDict)
     file.close()
     
     ### create output subdirectories
@@ -144,12 +145,12 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
         if key:    
             for targetPDB in values:
                 targetPDB = targetPDB.strip()
-                print(targetPDB)
+                # print(targetPDB)
                 p = mp.Process(target=jFatCatAlign,
                                args=(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
                                      subDir, alignmentCutoff))
                 procs.append(p)
-                print(procs)
+                # print(procs)
                 p.start()
             for proc in procs:
                 proc.join()
