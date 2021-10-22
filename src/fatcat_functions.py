@@ -80,8 +80,8 @@ def formatPDB_db(dbLocation):
         outList.write(file+"\n")
     outList.close()
            
-def jFatCatAlign(queryPDB, targetPDB, javaFullPath, aoFatCatJar, outputDir,
-                alignmentCutoff = 0.05):
+def jFatCatAlign(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
+                 outputDir, alignmentCutoff = 0.05):
     import os  
     import glob
     import subprocess
@@ -91,43 +91,19 @@ def jFatCatAlign(queryPDB, targetPDB, javaFullPath, aoFatCatJar, outputDir,
     else:
         os.mkdir(outputDir, mode = 0o755)
 
-    # queryFile = os.path.basename(queryPDB)
-    # queryPath = os.path.dirname(queryPDB)+"/"
-    # targetFile = os.path.basename(targetPDB)
-    # targetPath = os.path.dirname(targetPDB)+"/"
-    # outPath = outputDir
-    # outPrefix = outputDir+"/"+queryFile.rstrip('.pdb')+"_"+targetFile.rstrip('.pdb')
-
     proc = subprocess.Popen([javaFullPath, '-jar', aoFatCatJar,
-                             queryPDB, targetPDB, alignmentCutoff, outputDir])
+                             queryPDB, targetPDB, str(alignmentCutoff), outputDir])
     code=proc.wait()
     if str(code) == '0':
         print("[jFatCatAlign]: Success")
     else:
         print("[jFatCatAlign]: Failed")
 
-    # ### filter result files
-    # result = open(outPrefix+".aln", "r")
-    # # print(result.readlines()[2].split(' ')[1])
-    # prob = result.readlines()[2].split(' ')[1]
-    # print("Prob = " + str(float(prob)))
-    # if float(prob) >= float(alignmentCutoff):
-    #     files = glob.glob(outPrefix+"*")
-    #     print("Removed result\n")
-    #     # print(files)
-    #     for file in files:
-    #         os.remove(file)
-    # else:
-    #     print("Result saved\n")
-    # result.close()
 
-
-def fatcatMultiProcess(queryPDB, targetPDBList, FatcatRootDir,
-                       outputDir, alignmentCutoff = 0.05, cores = 8 ):
+def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
+                       outputDir, alignmentCutoff = 0.05, cores = 4):
     import multiprocessing as mp
-    from os.path import basename
     import os
-    import math
     ### create batches list
     if cores >= int(mp.cpu_count()):
         optCores = int(mp.cpu_count())-1
@@ -148,7 +124,7 @@ def fatcatMultiProcess(queryPDB, targetPDBList, FatcatRootDir,
         batchName = "b"+str(b)
         batchDict[batchName] = lines2[i:i + cores]
         b = b + 1
-    # return(batchDict)
+    print(batchDict)
     file.close()
     
     ### create output subdirectories
@@ -169,8 +145,9 @@ def fatcatMultiProcess(queryPDB, targetPDBList, FatcatRootDir,
             for targetPDB in values:
                 targetPDB = targetPDB.strip()
                 print(targetPDB)
-                p = mp.Process(target = fatcatAlign, args = (
-                    queryPDB, targetPDB, FatcatRootDir, subDir, alignmentCutoff ))
+                p = mp.Process(target=jFatCatAlign,
+                               args=(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
+                                     subDir, alignmentCutoff))
                 procs.append(p)
                 print(procs)
                 p.start()
