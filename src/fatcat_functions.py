@@ -82,15 +82,12 @@ def formatPDB_db(dbLocation):
            
 def jFatCatAlign(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
                  outputDir, alignmentCutoff = 0.05):
-    import os  
-    import glob
+    import os
     import subprocess
-
     if os.path.exists(outputDir):
         pass
     else:
         os.mkdir(outputDir, mode = 0o755)
-
     proc = subprocess.Popen([javaFullPath, '-jar', aoFatCatJar,
                              queryPDB, targetPDB, str(alignmentCutoff), outputDir],
                             bufsize=-1)
