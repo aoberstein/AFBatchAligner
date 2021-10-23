@@ -36,8 +36,8 @@ def FCtoXls(Dir):
        stats = re.sub("\s+", "\t", stats)
        pdb1 = stats.split('\t')[0]
        pdb2 = stats.split('\t')[1]
-       pdbFile = Dir + "/" + pdb1 + "/" + pdb1 + "_" + pdb2 + "_alignment.pdb"
-       txtFile = Dir + "/" + pdb1 + "/" + pdb1 + "_" + pdb2 + "_FatCat.txt"
+       pdbFile = Dir + "/" + pdb1 + "_" + pdb2 + "_alignment.pdb"
+       txtFile = Dir + "/" + pdb1 + "_" + pdb2 + "_FatCat.txt"
        # print(stats)
        # print(pdbFile)
        # print(txtFile)
@@ -48,6 +48,9 @@ def FCtoXls(Dir):
    writeDir = Dir
    print(writeDir)
    workbook = xlsxwriter.Workbook(writeDir + "0_" + queryPrefix + "_summary.xlsx")
+   float_format = workbook.add_format({'num_format': '#,00'})
+   sci_format = workbook.add_format({'num_format': '#.##0.00E+00'})
+   file_link_format = workbook.add_format({'bold': False, 'underline':True, 'font_color': 'blue', tip='Click here'})
    worksheet = workbook.add_worksheet()
    for row,line in enumerate(outLines):
        data = line.split('\t')
@@ -57,26 +60,27 @@ def FCtoXls(Dir):
        worksheet.write(row, 3, data[3]) #Target Length
 
        worksheet.write(row, 4, data[4]) #Twists
-       worksheet.write(row, 5, data[5]) #Percent Query Aligned
-       worksheet.write(row, 6, data[6]) #Percent Target Aligned
+       worksheet.write(row, 5, data[5], float_format) #Percent Query Aligned
+       worksheet.write(row, 6, data[6], float_format) #Percent Target Aligned
        worksheet.write(row, 7, data[7]) #Init. length
 
        worksheet.write(row, 8, data[8]) #Opt. Equivalent
-       worksheet.write(row, 9, data[9]) #Init. rmsd
-       worksheet.write(row, 10, data[10]) #Opt. rmsd
-       worksheet.write(row, 11, data[11]) #Chain rmsd
+       worksheet.write(row, 9, data[9], float_format) #Init. rmsd
+       worksheet.write(row, 10, data[10], float_format) #Opt. rmsd
+       worksheet.write(row, 11, data[11], float_format) #Chain rmsd
 
-       worksheet.write(row, 12, data[12]) #p-value
+       worksheet.write(row, 12, data[12], sci_format) #p-value
        worksheet.write(row, 13, data[13]) #score
        worksheet.write(row, 14, data[14]) #TotAlign Length
        worksheet.write(row, 15, data[15]) #Gap Length
 
        worksheet.write(row, 16, data[16]) #%Gaps of align
-       worksheet.write(row, 17, data[17]) #AFP number\tIdentity(%)
-       worksheet.write(row, 18, data[18]) #Similarity(%)
-       worksheet.write(row, 19, data[19]) #Alignment PDB File
+       worksheet.write(row, 17, data[17]) #AFP number
+       worksheet.write(row, 18, data[18]) #Identity(%)
+       worksheet.write(row, 19, data[19]) #Similarity(%)
 
-       worksheet.write(row, 20, data[20]) #Alignment txt File
+       worksheet.write(row, 20, data[20],file_link_format) #Alignment PDB File
+       worksheet.write(row, 21, data[21],file_link_format) #Alignment txt File
    workbook.close()
 
        # header = "Query\t" \
