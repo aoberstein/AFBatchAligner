@@ -4,10 +4,15 @@ from resultSummarization import *
 
 def main():
 
-    dir = "/home/adam/archive/intellij-workspace/test_area/output/HCMV_TB40E-BAC_UL148_bFILT-30.0"
+    # ## process a single "fcWriteTemp" dir
+    # dir = "/home/adam/archive/intellij-workspace/test_area/output/HCMV_TB40E-BAC_UL138_bFILT-30.0"
+    # # FCtoXls(dir)
+    # pandasToXls(dir)
 
-    # FCtoXls(dir)
-    pandasToXls(dir)
+    ## batch processing (multithreaded)
+    outputDirRoot = "/home/adam/archive/intellij-workspace/test_area/output/"
+    catFatcatTempFilesBatch(outputDirRoot=outputDirRoot, cores=8)
+
 
 
 
