@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 
-from resultSummarization import FCtoXls
+from resultSummarization import *
 
 def main():
 
     dir = "/home/adam/archive/intellij-workspace/test_area/output/HCMV_TB40E-BAC_UL148_bFILT-30.0"
 
-    FCtoXls(dir)
+    # FCtoXls(dir)
+    pandasToXls(dir)
 
 
 
