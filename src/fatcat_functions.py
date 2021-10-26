@@ -37,7 +37,81 @@ def filterPDB(file, cutoff):
     io.save(outPrefix, Select())
     
 
+def extractPdbChains(pdbFile):
+    '''
+    Note: removes original PDB file if multiple chains are found.
+    '''
+
+    ## helper function for "formatPDB_db"
+    from Bio.PDB.PDBParser import PDBParser
+    from Bio.PDB.PDBIO import PDBIO
+    from Bio.PDB.PDBIO import Select
+    import os
+
+    def notHet(residue):
+        res = residue.id[0]
+        return res != "HETATM"
+
+    ## custom select
+    class SelectChain(Select):
+        def __init__(self, chain):
+            self.chain = chain
+        def accept_chain(self, chain):
+            # print("[self.chain] " + self)
+            # print("[chain.id] " + chain.id)
+            if chain == self.chain:
+                return 1
+            else:
+                return 0
+
+    id = os.path.basename(pdbFile).rstrip(".pdb")
+    structure = PDBParser().get_structure(id, pdbFile)
+
+    ### remove chains with only hetatms (small molecules)
+    model = structure[0]
+    residue_to_remove = []
+    chain_to_remove = []
+    for chain in model:
+        for residue in chain:
+            if residue.id[0] != ' ':
+                residue_to_remove.append((chain.id, residue.id))
+        if len(chain) == 0:
+            chain_to_remove.append(chain.id)
+    for residue in residue_to_remove:
+        model[residue[0]].detach_child(residue[1])
+    for chain in chain_to_remove:
+        model.detach_child(chain)
+
+    ## do nothing if only 1 chain
+    if len(list(structure.get_chains())) == int(1):
+        pass
+    ## if > 1 chain, separate, write, and delete parent pdb
+    if len(list(structure.get_chains())) > int(1):
+        for chain in structure.get_chains():
+            if len(chain) == 0:
+                pass
+            if len(chain) > 0:
+                # for residue in chain:
+                # print(chain.get_residues())
+                outName = pdbFile.rstrip(".pdb") + "_" + chain.id + ".pdb"
+                print("[extractPdbChains] write: " + outName)
+                io = PDBIO()
+                io.set_structure(structure)
+                io.save(outName, SelectChain(chain))
+        os.remove(pdbFile)
+
 def formatPDB_db(dbLocation):
+    '''
+    1. find all pdb or .ent files in dbLocation
+    2. if .ent file is gzipped, unzip to .pdb file
+    3. create an output subdirectory of dbLocation
+            "/FATCATdb_{date}"
+    4. extract each chain from pdb files, write to new file, and delete parent pdb
+        (if chains exist)
+    5. create a log file containing the full path of each pdb file
+        (useful for batch processing)
+    '''
+
     ### globs all .ent.gz or .pdb files in dbLocation directory
     import glob
     import os
@@ -45,6 +119,7 @@ def formatPDB_db(dbLocation):
     import re
     import shutil
     import gzip
+
     ### create output directory for FATCAT db
     newDir = os.path.dirname(dbLocation)+"/FATCATdb_"+str(date.today())
     # print(newDir)
@@ -52,8 +127,8 @@ def formatPDB_db(dbLocation):
         pass
     else:
         os.mkdir(newDir, mode = 0o755)
-    ### glob all pdb files (.ent and .pdb files are identical,
-    # just different extension)
+
+    ### glob all pdb files (.ent and .pdb files are identical, just different extension)
     for root, dirs, files in os.walk(dbLocation):
         for filename in files:
             file = os.path.join(root, filename)
@@ -66,12 +141,20 @@ def formatPDB_db(dbLocation):
                 with gzip.open(file, 'rb') as f_in:
                     with open(outfile, 'wb') as f_out:
                         shutil.copyfileobj(f_in, f_out)
-            if re.search("^.*.pdb", file):
+            if re.search(".pdb$", file):
                 print(newDir+"/"+os.path.basename(file))
                 shutil.copy(file, newDir+"/"+os.path.basename(file))
+
+    ### extract individual chains from the pdb files
+    pdbFiles = glob.glob(newDir+"/*.pdb")
+    for pdbFile in pdbFiles:
+        extractPdbChains(pdbFile)
+
     ### generate list of pdb files for FATCATSearch
     pdbFiles = glob.glob(newDir+"/*.pdb")
     print(len(pdbFiles))
+    # for pdbFile in pdbFiles:
+
     outList = open(newDir+"/FATCAT_list_"+str( date.today() )+".list", "w")
     for file in pdbFiles:
         # print(file)
@@ -79,7 +162,9 @@ def formatPDB_db(dbLocation):
         # outList.write(os.path.basename(file).rstrip(".pdb")+"\n")
         outList.write(file+"\n")
     outList.close()
-           
+
+
+
 def jFatCatAlign(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
                  outputDir, alignmentCutoff = 0.05):
     import os

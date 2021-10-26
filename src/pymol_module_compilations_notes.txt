@@ -1,0 +1,13 @@
+## download sourcode and extract
+
+## install dependencies
+sudo aptitude install
+    libgl1-mesa-dev (may need to downgrade some other libraruies)
+    libglm-dev
+    libglex-dev
+    lib-openmpi-dev
+    libmsgpack-dev
+    libnetcdf-dev
+
+## from source folder:
+ python3 setup.py install
