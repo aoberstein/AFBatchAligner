@@ -100,7 +100,7 @@ def extractPdbChains(pdbFile):
                 io.save(outName, SelectChain(chain))
         os.remove(pdbFile)
 
-def formatPDB_db(dbLocation):
+def formatPDB_db(dbLocation, cores):
     '''
     1. find all pdb or .ent files in dbLocation
     2. if .ent file is gzipped, unzip to .pdb file
@@ -119,6 +119,16 @@ def formatPDB_db(dbLocation):
     import re
     import shutil
     import gzip
+    import multiprocessing as mp
+
+    ### adjust number of cores
+    if cores >= int(mp.cpu_count()):
+        optCores = int(mp.cpu_count())-1
+        print("Too many cores selected")
+        print("Reducing to " + str(optCores) + " cores")
+        cores = optCores
+    if cores < int(mp.cpu_count()):
+        cores = cores
 
     ### create output directory for FATCAT db
     newDir = os.path.dirname(dbLocation)+"/FATCATdb_"+str(date.today())
@@ -145,10 +155,35 @@ def formatPDB_db(dbLocation):
                 print(newDir+"/"+os.path.basename(file))
                 shutil.copy(file, newDir+"/"+os.path.basename(file))
 
-    ### extract individual chains from the pdb files
+    ### multiprocess extract individual chains from the pdb files
     pdbFiles = glob.glob(newDir+"/*.pdb")
-    for pdbFile in pdbFiles:
-        extractPdbChains(pdbFile)
+    batchDict = {}
+    b = 1
+    for i in range(0, len(pdbFiles), cores):
+        batchName = "b"+str(b)
+        batchDict[batchName] = pdbFiles[i:i + cores]
+        b = b + 1
+    # print(batchDict)
+
+    for key, values in batchDict.items():
+        print("[renderPdbBatch]: Processing batch ", key, " of ", len(batchDict))
+        procs = []
+        # if key == "b1":
+        #     print(key, values)
+        #     for d in values:
+        #         print(d)
+        if key:
+            for pdbFile in values:
+                # print(inputPDB)
+                # single argument requires a "," after
+                # see: https://stackoverflow.com/questions/1559125/string-arguments-in-python-multiprocessing
+                p = mp.Process(target=extractPdbChains, args=(pdbFile,))
+                procs.append(p)
+                # print(p)
+                p.start()
+            for proc in procs:
+                proc.join()
+
 
     ### generate list of pdb files for FATCATSearch
     pdbFiles = glob.glob(newDir+"/*.pdb")
@@ -221,6 +256,7 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
     
     ### multiprocess with fatcat
     for key, values in batchDict.items():
+        print("[renderPdbBatch]: Processing batch ", key, " of ", len(batchDict))
         procs = []
         # if key == "b1":
         #     print(key, values)

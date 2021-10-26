@@ -19,7 +19,9 @@ def pandasToXls(Dir):
     queryPrefix = os.path.basename(Dir.rstrip("/"))
     # print(queryPrefix)
     subDir = Dir + "fcWriteTemp/"
+    # print(subDir)
     files = glob.glob(subDir + "*_fcLine.tab")
+    # print(files)
     header = ["Query", "Target", "Query Length", "Target Length",
              "Twists", "Percent Query Aligned", "Percent Target Aligned",
              "Init. length", "Opt. Equiv.", "Init. rmsd", "Opt. rmsd",
@@ -33,6 +35,7 @@ def pandasToXls(Dir):
     for file in files:
         handle = open(file, "r")
         stats = handle.readlines()[1]
+        # print(stats)
         stats = stats.strip()
         stats = re.sub("\s+", "\t", stats)
         statList = stats.split('\t')
@@ -54,6 +57,9 @@ def pandasToXls(Dir):
     ## remove some columns
     df = df.drop(columns=['Init. length', 'Init. rmsd', 'Gap Length', 'AFP number'])
 
+    # ## convert NaN to "0":
+    # df = df.fillna(0)
+
     ## coerce back to list of lists
     # allows greater control over formatting (e.g. multi-formatting of header cells)
     # using pandas allows sorting prior to generating the excel file
@@ -62,7 +68,7 @@ def pandasToXls(Dir):
     
     ## write formatted xls file
     writeDir = Dir
-    workbook = xlsxwriter.Workbook(writeDir + "0_" + queryPrefix + "_summary.xlsx")
+    workbook = xlsxwriter.Workbook(writeDir + "0_" + queryPrefix + "_summary.xlsx", {'nan_inf_to_errors': True})
     center_format = workbook.add_format()
     center_format.set_align('center')
     right_format = workbook.add_format()
@@ -140,7 +146,7 @@ def pandasToXls(Dir):
     workbook.close()
     
 
-def catFatcatTempFilesBatch(outputDirRoot, cores):
+def pandasToXlsBatch(outputDirRoot, cores):
     import multiprocessing as mp
     import os
 
@@ -177,10 +183,10 @@ def catFatcatTempFilesBatch(outputDirRoot, cores):
     ### multiprocess with resultSummarization.pandasToXls
     for key, values in batchDict.items():
         procs = []
-        if key == "b1":
-            print(key, values)
-            for d in values:
-                print(d)
+        # if key == "b1":
+        #     print(key, values)
+        #     for d in values:
+        #         print(d)
         if key:
             for Dir in values:
                 # print(type(Dir))
