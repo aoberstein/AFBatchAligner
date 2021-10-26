@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from resultSummarization import *
+from renderStructures import *
 
 def main():
 
@@ -9,11 +10,18 @@ def main():
     # # FCtoXls(dir)
     # pandasToXls(dir)
 
-    ## batch processing (multithreaded)
+    # ## batch processing (multithreaded)
+    # outputDirRoot = "/home/adam/archive/intellij-workspace/test_area/output/"
+    # catFatcatTempFilesBatch(outputDirRoot=outputDirRoot, cores=8)
+
+    # ##
+    # pdb = "/home/adam/archive/intellij-workspace/test_area/output/HCMV_TB40E-BAC_UL148_bFILT-30.0" + \
+    #       "/HCMV_TB40E-BAC_UL148_bFILT-30.0_HCMV_TB40E-BAC_RL10_alignment.pdb"
+    # renderPDB(inputPDB=pdb)
+
+    ## batch pse and png export
     outputDirRoot = "/home/adam/archive/intellij-workspace/test_area/output/"
-    catFatcatTempFilesBatch(outputDirRoot=outputDirRoot, cores=8)
-
-
+    renderPdbBatch(outputDirRoot=outputDirRoot, cores=8)
 
 
 
