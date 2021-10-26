@@ -67,13 +67,20 @@ def extractPdbChains(pdbFile):
     id = os.path.basename(pdbFile).rstrip(".pdb")
     structure = PDBParser().get_structure(id, pdbFile)
 
+    ### Remove all non-amino acid residues
     ### remove chains with only hetatms (small molecules)
+    ### remove water molecules
+    ### remove nucleic acids
+    aaList = ['ALA','CYS','ASP','GLU','PHE','GLY','HIS','ILE','LYS','LEU','MET','ASN','PRO','GLN',
+                           'ARG','SER','THR','VAL','TRP','TYR']
     model = structure[0]
     residue_to_remove = []
     chain_to_remove = []
     for chain in model:
         for residue in chain:
-            if residue.id[0] != ' ':
+            if residue.get_resname() not in aaList:
+                print(residue.get_resname())
+            # if residue.id[0] != ' ':
                 residue_to_remove.append((chain.id, residue.id))
         if len(chain) == 0:
             chain_to_remove.append(chain.id)
@@ -98,7 +105,7 @@ def extractPdbChains(pdbFile):
                 io = PDBIO()
                 io.set_structure(structure)
                 io.save(outName, SelectChain(chain))
-        os.remove(pdbFile)
+        # os.remove(pdbFile)
 
 def formatPDB_db(dbLocation, cores):
     '''
