@@ -27,7 +27,7 @@ def pandasToXls(Dir):
              "Init. length", "Opt. Equiv.", "Init. rmsd", "Opt. rmsd",
              "Chain rmsd", "p-value", "score", "TotAlign Length", "Gap Length",
              "%Gaps of align", "AFP number", "Ident. (%)", "Similar (%)",
-             "Alignment txt File", "Alignment PDB File"]
+             "Alignment txt File", "Alignment PSE File"]
 
     ## coerce lists of lists to pd.DataFrame (allows sorting)
     outLines = []
@@ -52,7 +52,7 @@ def pandasToXls(Dir):
     ## sort df
     df["score"] = pandas.to_numeric(df["score"])
     df.sort_values(by="score", ascending=False, inplace=True)
-    print(df['score'])
+    # print(df['score'])
 
     ## remove some columns
     df = df.drop(columns=['Init. length', 'Init. rmsd', 'Gap Length', 'AFP number'])
@@ -114,7 +114,7 @@ def pandasToXls(Dir):
     worksheet.write(0, 14, header[14], header_format1) #Identity(%)
     worksheet.write(0, 15, header[15], header_format1) #Similarity(%)
     worksheet.write(0, 16, header[16], header_format2) # Alignment txt file
-    worksheet.write(0, 17, header[17], header_format2) #Alignment pdb File
+    worksheet.write(0, 17, header[17], header_format2) #Alignment pse File
 
     ## write data with formatting
     for index,list in enumerate(outLines):
@@ -141,7 +141,8 @@ def pandasToXls(Dir):
         worksheet.write(row, 14, float(data[14]), percent_format) #Identity(%)
         worksheet.write(row, 15, float(data[15]), percent_format) #Similarity(%)
         worksheet.write_url(row, 16, data[16], file_link_format, string=os.path.basename(data[16])) # Alignment txt file
-        worksheet.write_url(row, 17, data[17], file_link_format, string=os.path.basename(data[17])) #Alignment pdb File
+        worksheet.write_url(row, 17, data[17].rstrip(".pdb")+".pse", file_link_format,
+                            string=os.path.basename(data[17]).rstrip(".pdb")+".pse") #Alignment pse File
 
     workbook.close()
     
@@ -153,8 +154,8 @@ def pandasToXlsBatch(outputDirRoot, cores):
     ### adjust number of cores
     if cores >= int(mp.cpu_count()):
         optCores = int(mp.cpu_count())-1
-        print("Too many cores selected")
-        print("Reducing to " + str(optCores) + " cores")
+        # print("Too many cores selected")
+        # print("Reducing to " + str(optCores) + " cores")
         cores = optCores
     if cores < int(mp.cpu_count()):
         cores = cores

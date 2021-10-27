@@ -102,7 +102,7 @@ def extractPdbChains(pdbFile):
             if len(chain) > 0:
                 # for residue in chain:
                 # print(chain.get_residues())
-                outName = pdbFile.rstrip(".pdb") + "_" + chain.id + ".pdb"
+                outName = pdbFile.rstrip(".pdb") + "_" + chain.id.upper() + ".pdb"
                 print("[extractPdbChains] write: " + outName)
                 io = PDBIO()
                 io.set_structure(structure)
@@ -120,13 +120,16 @@ def extractPDB(filename, root, newDir):
     if re.search("^.*ent\.gz$", file):
         # print(filename)
         ### strip "pdb" prefix
-        outfile = newDir+"/"+filename.lstrip('pdb').rstrip('.ent.gz')+".pdb"
+        name = filename.lstrip('pdb').upper()
+        outfile = newDir+"/"+name.rstrip('.ENT.GZ')+".pdb"
         with gzip.open(file, 'rb') as f_in:
             with open(outfile, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
     if re.search(".pdb$", file):
-        print(newDir+"/"+os.path.basename(file))
-        shutil.copy(file, newDir+"/"+os.path.basename(file))
+        name = filename.rstrip('.pdb').upper()
+        outfile = newDir+"/"+name +".pdb"
+        print(outfile)
+        shutil.copy(file, outfile)
 
 
 def formatPDB_db(dbLocation, cores):
@@ -164,34 +167,34 @@ def formatPDB_db(dbLocation, cores):
     else:
         os.mkdir(newDir, mode = 0o755)
 
-    # ### glob all pdb files (.ent and .pdb files are identical, just different extension)
-    # for root, dirs, files in os.walk(dbLocation):
-    #     batchDict = {}
-    #     b = 1
-    #     for i in range(0, len(files), cores):
-    #         batchName = "b"+str(b)
-    #         batchDict[batchName] = files[i:i + cores]
-    #         b = b + 1
-    #     # print(batchDict)
-    #
-    #     for key, values in batchDict.items():
-    #         print("[extractPDB]: Processing batch ", key, " of ", len(batchDict))
-    #         procs = []
-    #         # if key == "b1":
-    #         #     print(key, values)
-    #         #     for d in values:
-    #         #         print(d)
-    #         if key:
-    #             for filename in values:
-    #                 # print(inputPDB)
-    #                 # single argument requires a "," after
-    #                 # see: https://stackoverflow.com/questions/1559125/string-arguments-in-python-multiprocessing
-    #                 p = mp.Process(target=extractPDB, args=(filename, root, newDir))
-    #                 procs.append(p)
-    #                 # print(p)
-    #                 p.start()
-    #             for proc in procs:
-    #                 proc.join()
+    ### glob all pdb files (.ent and .pdb files are identical, just different extension)
+    for root, dirs, files in os.walk(dbLocation):
+        batchDict = {}
+        b = 1
+        for i in range(0, len(files), cores):
+            batchName = "b"+str(b)
+            batchDict[batchName] = files[i:i + cores]
+            b = b + 1
+        # print(batchDict)
+
+        for key, values in batchDict.items():
+            print("[extractPDB]: Processing batch ", key, " of ", len(batchDict))
+            procs = []
+            # if key == "b1":
+            #     print(key, values)
+            #     for d in values:
+            #         print(d)
+            if key:
+                for filename in values:
+                    # print(inputPDB)
+                    # single argument requires a "," after
+                    # see: https://stackoverflow.com/questions/1559125/string-arguments-in-python-multiprocessing
+                    p = mp.Process(target=extractPDB, args=(filename, root, newDir))
+                    procs.append(p)
+                    # print(p)
+                    p.start()
+                for proc in procs:
+                    proc.join()
 
     ### multiprocess extract individual chains from the pdb files
     pdbFiles = glob.glob(newDir+"/*.pdb")

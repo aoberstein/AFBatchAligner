@@ -18,34 +18,34 @@ def main():
     FCJar = str("/home/adam/archive/intellij-workspace/aofatcat_project/out/artifacts/aofatcat.jar/" +
                       "aofatcat_project.jar")
 
-    targetList = str("/home/adam/archive/intellij-workspace/test_area/FATCATdb_2021-10-26/" +
-                     "FATCAT_list_2021-10-26.list")
+    targetList = str("/home/adam/archive/db/pdb/2021-10-26/pdb_clusters/" +
+                     "bc-40.list")
 
-    outDir = "/home/adam/archive/intellij-workspace/test_area/pdb_test1"
+    outDir = "/home/adam/archive/intellij-workspace/test_area/pdb_test2"
 
 
     for query in queryFiles:
         print(query)
-
-        # fatcatMultiProcess(
-        #     queryPDB=query,
-        #     targetPDBList=targetList,
-        #     javaFullPath="/usr/bin/java",
-        #     aoFatCatJar=FCJar,
-        #     outputDir=outDir,
-        #     alignmentCutoff=0.01,
-        #     cores=7
-        # )
+    #
+    #     fatcatMultiProcess(
+    #         queryPDB=query,
+    #         targetPDBList=targetList,
+    #         javaFullPath="/usr/bin/java",
+    #         aoFatCatJar=FCJar,
+    #         outputDir=outDir,
+    #         alignmentCutoff=0.05,
+    #         cores=32
+    #     )
 
 
         # pandasToXls('/home/adam/archive/intellij-workspace/test_area/pdb_test1/HCMV_TB40E-BAC_UL148_bFILT-30.0')
 
         # ## batch summarize to xlsprocessing (multithreaded)
-        pandasToXlsBatch(outputDirRoot=outDir, cores=8)
+        pandasToXlsBatch(outputDirRoot=outDir, cores=32)
 
 
         # ## batch pse and png export
-        renderPdbBatch(outputDirRoot=outDir, cores=8)
+        renderPdbBatch(outputDirRoot=outDir, cores=32)
 
 if __name__ == '__main__':
     main()
