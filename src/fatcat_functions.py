@@ -79,7 +79,7 @@ def extractPdbChains(pdbFile):
     for chain in model:
         for residue in chain:
             if residue.get_resname() not in aaList:
-                print(residue.get_resname())
+                # print(residue.get_resname())
             # if residue.id[0] != ' ':
                 residue_to_remove.append((chain.id, residue.id))
         if len(chain) == 0:
@@ -103,7 +103,7 @@ def extractPdbChains(pdbFile):
                 # for residue in chain:
                 # print(chain.get_residues())
                 outName = pdbFile.rstrip(".pdb") + "_" + chain.id.upper() + ".pdb"
-                print("[extractPdbChains] write: " + outName)
+                # print("[extractPdbChains] write: " + outName)
                 io = PDBIO()
                 io.set_structure(structure)
                 io.save(outName, SelectChain(chain))
@@ -128,7 +128,7 @@ def extractPDB(filename, root, newDir):
     if re.search(".pdb$", file):
         name = filename.rstrip('.pdb').upper()
         outfile = newDir+"/"+name +".pdb"
-        print(outfile)
+        # print(outfile)
         shutil.copy(file, outfile)
 
 
@@ -153,8 +153,8 @@ def formatPDB_db(dbLocation, cores):
     ### adjust number of cores
     if cores >= int(mp.cpu_count()):
         optCores = int(mp.cpu_count())-1
-        print("Too many cores selected")
-        print("Reducing to " + str(optCores) + " cores")
+        # print("Too many cores selected")
+        # print("Reducing to " + str(optCores) + " cores")
         cores = optCores
     if cores < int(mp.cpu_count()):
         cores = cores
@@ -178,7 +178,7 @@ def formatPDB_db(dbLocation, cores):
         # print(batchDict)
 
         for key, values in batchDict.items():
-            print("[extractPDB]: Processing batch ", key, " of ", len(batchDict))
+            # print("[extractPDB]: Processing batch ", key, " of ", len(batchDict))
             procs = []
             # if key == "b1":
             #     print(key, values)
@@ -207,7 +207,7 @@ def formatPDB_db(dbLocation, cores):
     # print(batchDict)
 
     for key, values in batchDict.items():
-        print("[extractChains]: Processing batch ", key, " of ", len(batchDict))
+        # print("[extractChains]: Processing batch ", key, " of ", len(batchDict))
         procs = []
         # if key == "b1":
         #     print(key, values)
@@ -227,7 +227,7 @@ def formatPDB_db(dbLocation, cores):
 
     ### generate list of pdb files for FATCATSearch
     pdbFiles = glob.glob(newDir+"/*.pdb")
-    print(len(pdbFiles))
+    # print(len(pdbFiles))
     # for pdbFile in pdbFiles:
 
     outList = open(newDir+"/FATCAT_list_"+str( date.today() )+".list", "w")
@@ -252,21 +252,22 @@ def jFatCatAlign(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
                              queryPDB, targetPDB, str(alignmentCutoff), outputDir],
                             bufsize=-1)
     code=proc.wait()
-    if str(code) == '0':
-        print("[jFatCatAlign]: Success")
-    else:
-        print("[jFatCatAlign]: Failed")
+    # if str(code) == '0':
+        # print("[jFatCatAlign]: Success")
+    # else:
+        # print("[jFatCatAlign]: Failed")
 
 
 def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
                        outputDir, alignmentCutoff = 0.05, cores = 4):
     import multiprocessing as mp
     import os
+    import sys
     ### create batches list
     if cores >= int(mp.cpu_count()):
         optCores = int(mp.cpu_count())-1
-        print("Too many cores selected")
-        print("Reducing to " + str(optCores) + " cores")
+        # print("Too many cores selected")
+        # print("Reducing to " + str(optCores) + " cores")
         cores = optCores
     if cores < int(mp.cpu_count()):
         cores = cores     
@@ -300,16 +301,24 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
         procs = []
         # if key == "b1":
         #     print(key, values)
-        if key:    
-            for targetPDB in values:
-                targetPDB = targetPDB.strip()
-                # print(targetPDB)
-                p = mp.Process(target=jFatCatAlign,
-                               args=(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
-                                     subDir, alignmentCutoff))
-                procs.append(p)
-                # print(procs)
-                p.start()
-            for proc in procs:
-                proc.join()
-
+        with open(os.devnull, 'w') as devnull:
+            # suppress stdout
+            orig_stdout_fno = os.dup(sys.stdout.fileno())
+            os.dup2(devnull.fileno(), 1)
+            # suppress stderr
+            orig_stderr_fno = os.dup(sys.stderr.fileno())
+            os.dup2(devnull.fileno(), 2)
+            if key:
+                for targetPDB in values:
+                    targetPDB = targetPDB.strip()
+                    # print(targetPDB)
+                    p = mp.Process(target=jFatCatAlign,
+                                   args=(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
+                                         subDir, alignmentCutoff))
+                    procs.append(p)
+                    # print(procs)
+                    p.start()
+                for proc in procs:
+                    proc.join()
+        os.dup2(orig_stdout_fno, 1)  # restore stdout
+        os.dup2(orig_stderr_fno, 2)  # restore stderr

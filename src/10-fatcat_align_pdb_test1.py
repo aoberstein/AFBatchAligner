@@ -26,16 +26,16 @@ def main():
 
     for query in queryFiles:
         print(query)
-    #
-    #     fatcatMultiProcess(
-    #         queryPDB=query,
-    #         targetPDBList=targetList,
-    #         javaFullPath="/usr/bin/java",
-    #         aoFatCatJar=FCJar,
-    #         outputDir=outDir,
-    #         alignmentCutoff=0.05,
-    #         cores=32
-    #     )
+
+        fatcatMultiProcess(
+            queryPDB=query,
+            targetPDBList=targetList,
+            javaFullPath="/usr/bin/java",
+            aoFatCatJar=FCJar,
+            outputDir=outDir,
+            alignmentCutoff=0.05,
+            cores=32
+        )
 
 
         # pandasToXls('/home/adam/archive/intellij-workspace/test_area/pdb_test1/HCMV_TB40E-BAC_UL148_bFILT-30.0')
