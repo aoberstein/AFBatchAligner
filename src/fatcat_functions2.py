@@ -40,14 +40,13 @@ def filterPDB(file, cutoff):
 def extractPdbChains(pdbFile):
     '''
     Note: removes original PDB file if multiple chains are found.
-    ## helper function for "formatPDB_db"
     '''
 
+    ## helper function for "formatPDB_db"
     from Bio.PDB.PDBParser import PDBParser
     from Bio.PDB.PDBIO import PDBIO
     from Bio.PDB.PDBIO import Select
     import os
-    import shutil
 
     def notHet(residue):
         res = residue.id[0]
@@ -90,17 +89,11 @@ def extractPdbChains(pdbFile):
     for chain in chain_to_remove:
         model.detach_child(chain)
 
-    print(len(list(structure.get_chains())))
+    ## do nothing if only 1 chain
     if len(list(structure.get_chains())) < int(1):
         os.remove(pdbFile)
-    ## rename with chain ("_A") if only 1 chain
     if len(list(structure.get_chains())) == int(1):
-        print("FOUND")
-        for chain in structure.get_chains():
-            outName = pdbFile.rstrip(".pdb") + "_" + chain.id.upper() + ".pdb"
-            print(pdbFile)
-            print(outName)
-            shutil.copy(src=pdbFile, dst=outName)
+        pass
     ## if > 1 chain, separate, write, and delete parent pdb
     if len(list(structure.get_chains())) > int(1):
         for chain in structure.get_chains():
@@ -117,10 +110,6 @@ def extractPdbChains(pdbFile):
         os.remove(pdbFile)
 
 def extractPDB(filename, root, newDir):
-    '''
-    Note: helper function for "formatPDB_db"
-    '''
-
     import shutil
     import os
     import re
@@ -274,8 +263,6 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
     import multiprocessing as mp
     import os
     import sys
-    import time
-
     ### create batches list
     if cores >= int(mp.cpu_count()):
         optCores = int(mp.cpu_count())-1
@@ -307,34 +294,41 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
         pass
     else:
         os.mkdir(subDir, mode = 0o755)
-
-    ts = time.time()
+    
     ### multiprocess with fatcat
     for key, values in batchDict.items():
-        print("[renderPdbBatch]: Processing batch ", key, " of ", len(batchDict))
-        procs = []
+        for targetPDB in values:
+            if "6JXR_N.pdb" in targetPDB:
+                print("[renderPdbBatch]: Processing batch ", key, " of ", len(batchDict))
+
+        # print("[renderPdbBatch]: Processing batch ", key, " of ", len(batchDict))
+
         # if key == "b1":
         #     print(key, values)
-        with open(os.devnull, 'w') as devnull:
-            # suppress stdout
-            orig_stdout_fno = os.dup(sys.stdout.fileno())
-            os.dup2(devnull.fileno(), 1)
-            # suppress stderr
-            orig_stderr_fno = os.dup(sys.stderr.fileno())
-            os.dup2(devnull.fileno(), 2)
-            # if key == "b1" or key == "b2" or key == "b3":
-            if key in ["b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "b10"]:
-                for targetPDB in values:
-                    targetPDB = targetPDB.strip()
-                    # print(targetPDB)
-                    p = mp.Process(target=jFatCatAlign,
-                                   args=(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
-                                         subDir, alignmentCutoff))
-                    procs.append(p)
-                    # print(procs)
-                    p.start()
-                for proc in procs:
-                    proc.join()
-        os.dup2(orig_stdout_fno, 1)  # restore stdout
-        os.dup2(orig_stderr_fno, 2)  # restore stderr
-    print('Time in batch parallel:', time.time() - ts)
+        # if key:
+        #     for targetPDB in values:
+        #         print(targetPDB)
+
+        # if key:
+        #     procs = []
+        #     for targetPDB in values:
+                # print(targetPDB)
+            #     targetPDB = targetPDB.strip()
+            #     with open(os.devnull, 'w') as devnull:
+            #         # suppress stdout
+            #         orig_stdout_fno = os.dup(sys.stdout.fileno())
+            #         os.dup2(devnull.fileno(), 1)
+            #         # suppress stderr
+            #         orig_stderr_fno = os.dup(sys.stderr.fileno())
+            #         os.dup2(devnull.fileno(), 2)
+            #         p = mp.Process(target=jFatCatAlign,
+            #                        args=(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
+            #                              subDir, alignmentCutoff))
+            #         procs.append(p)
+            #         # print(procs)
+            #         p.start()
+            #         os.dup2(orig_stdout_fno, 1)  # restore stdout
+            #         os.dup2(orig_stderr_fno, 2)  # restore stderr
+            # for proc in procs:
+            #     proc.join()
+
