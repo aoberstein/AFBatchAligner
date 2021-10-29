@@ -275,7 +275,7 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
     import os
     import sys
     import time
-    ### create batches list
+
     if cores >= int(mp.cpu_count()):
         optCores = int(mp.cpu_count())-1
         # print("Too many cores selected")
@@ -316,48 +316,3 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
     os.dup2(orig_stderr_fno, 2)  # restore stderr
     print('Time in parallel:', time.time() - ts)
 
-
-
-
-    # lines2 = []
-    # for line in lines:
-    #     line = line.rstrip("\n")
-    #     lines2.append(line)
-    # batchDict = {}
-    # b = 1
-    # for i in range(0, len(lines2), cores):
-    #     batchName = "b"+str(b)
-    #     batchDict[batchName] = lines2[i:i + cores]
-    #     b = b + 1
-    # # print(batchDict)
-    # file.close()
-    #
-
-    #
-    # ### multiprocess with fatcat
-    # for key, values in batchDict.items():
-    #     print("[renderPdbBatch]: Processing batch ", key, " of ", len(batchDict))
-    #     procs = []
-    #     # if key == "b1":
-    #     #     print(key, values)
-    #     with open(os.devnull, 'w') as devnull:
-    #         # suppress stdout
-    #         orig_stdout_fno = os.dup(sys.stdout.fileno())
-    #         os.dup2(devnull.fileno(), 1)
-    #         # suppress stderr
-    #         orig_stderr_fno = os.dup(sys.stderr.fileno())
-    #         os.dup2(devnull.fileno(), 2)
-    #         if key:
-    #             for targetPDB in values:
-    #                 targetPDB = targetPDB.strip()
-    #                 # print(targetPDB)
-    #                 p = mp.Process(target=jFatCatAlign,
-    #                                args=(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
-    #                                      subDir, alignmentCutoff))
-    #                 procs.append(p)
-    #                 # print(procs)
-    #                 p.start()
-    #             for proc in procs:
-    #                 proc.join()
-    #     os.dup2(orig_stdout_fno, 1)  # restore stdout
-    #     os.dup2(orig_stderr_fno, 2)  # restore stderr

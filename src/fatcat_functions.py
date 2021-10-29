@@ -323,7 +323,7 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
             orig_stderr_fno = os.dup(sys.stderr.fileno())
             os.dup2(devnull.fileno(), 2)
             # if key == "b1" or key == "b2" or key == "b3":
-            if key in ["b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "b10"]:
+            if key inc ["b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "b9", "b10"]:
                 for targetPDB in values:
                     targetPDB = targetPDB.strip()
                     # print(targetPDB)
