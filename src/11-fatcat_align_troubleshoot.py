@@ -17,7 +17,7 @@ def main():
     FCJar = str("/home/adam/archive/intellij-workspace/aofatcat_project/out/artifacts/aofatcat.jar/" +
                       "aofatcat_project.jar")
 
-    outDir = "/home/adam/archive/intellij-workspace/test_area/pdb_test4_async"
+    outDir = "/home/adam/archive/intellij-workspace/test_area/pdb_test5_async"
 
     targetList = str("/home/adam/archive/db/pdb/2021-10-26/pdb_clusters/bc-40.list")
     # for line, idx in enumerate(open(targetList).readlines()):
@@ -33,18 +33,18 @@ def main():
             aoFatCatJar=FCJar,
             outputDir=outDir,
             alignmentCutoff=0.001,
-            cores=32
+            cores=8
         )
 
 
-        # pandasToXls('/home/adam/archive/intellij-workspace/test_area/pdb_test1/HCMV_TB40E-BAC_UL148_bFILT-30.0')
-
-        # ## batch summarize to xlsprocessing (multithreaded)
-        #pandasToXlsBatch(outputDirRoot=outDir, cores=32)
-
-
-        # ## batch pse and png export
-        #renderPdbBatch(outputDirRoot=outDir, cores=32)
+    # pandasToXls('/home/adam/archive/intellij-workspace/test_area/pdb_test4_async/HCMV_TB40E-BAC_UL148_bFILT-30.0')
+    #
+    # ## batch summarize to xlsprocessing (multithreaded)
+    # pandasToXlsBatch(outputDirRoot=outDir, cores=32)
+    #
+    #
+    # ## batch pse and png export
+    # renderPdbBatch(outputDirRoot=outDir, cores=32)
 
 if __name__ == '__main__':
     main()

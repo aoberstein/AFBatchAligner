@@ -304,7 +304,7 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
         # suppress stderr
         orig_stderr_fno = os.dup(sys.stderr.fileno())
         os.dup2(devnull.fileno(), 2)
-        pool = mp.Pool(cores)
+        pool = mp.Pool(processes=cores)
         # for targetPDB in lines[:309]:
         for targetPDB in lines:
             targetPDB = targetPDB.strip()
