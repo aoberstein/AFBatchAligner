@@ -19,7 +19,7 @@ def main():
 
     outDir = "/home/adam/archive/intellij-workspace/test_area/test6_async_lengthFilt_bc40"
 
-    targetList = str("/home/adam/archive/db/pdb/2021-10-26/pdb_clusters/bc-40.list")
+    targetList = str("/home/adam/archive/db/pdb/2021-10-26/pdb_clusters/bc-40_filt60.list")
     # for line, idx in enumerate(open(targetList).readlines()):
     #     print(line, idx)
 
@@ -33,7 +33,7 @@ def main():
             aoFatCatJar=FCJar,
             outputDir=outDir,
             alignmentCutoff=0.001,
-            cores=8
+            cores=32
         )
 
 
