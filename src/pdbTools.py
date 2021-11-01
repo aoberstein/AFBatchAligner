@@ -37,6 +37,7 @@ def exportPdbToLengths(dbFolder, cores = 32):
     outFile = open(outName, "w")
 
     pdbFiles = glob.glob(dbFolder + "*.pdb")
+    print(pdbFiles)
     ts = time.time()
 
     pool = mp.Pool(processes=cores)

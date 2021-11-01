@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from pdbTools import checkFolderBackslash
-from pdbTools import exportPdbToLengths
+from pdbTools2 import exportPdbToLengths
 
 
 def main():
@@ -13,7 +13,8 @@ def main():
 
 
     # ## format pdb database (exclude all non-AA residues and chains)
-    dbRoot = "/home/adam/archive/db/pdb/2021-10-26/FATCATdb_2021-10-28"
+    # dbRoot = "/home/adam/archive/db/pdb/2021-10-26/FATCATdb_2021-10-28"
+    dbRoot = "/home/adam/archive/db/pdb/2021-10-26/test2"
     # dbRoot = checkFolderBackslash(dbRoot)
     # print(dbRoot)
     # formatPDB_db(dbLocation=dbRoot, cores=28)

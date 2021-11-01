@@ -37,9 +37,12 @@ def filterPDB(file, cutoff):
     io.save(outPrefix, Select())
     
 
-def extractPdbChains(pdbFile):
+def extractPdbChains(pdbFile, outList):
     '''
     Note: removes original PDB file if multiple chains are found.
+    Therefore, first extract PDB files to a new directory to avoid deleting originals
+    Note: NMR structures will appear as multiple chains due to the overlayed models
+    These will be reduced to one model (last model through overwriting)
     '''
 
     ## helper function for "formatPDB_db"
@@ -89,25 +92,51 @@ def extractPdbChains(pdbFile):
     for chain in chain_to_remove:
         model.detach_child(chain)
 
-    ## do nothing if only 1 chain
+    ### wtite chains to pdb file
+    # write chain lengths to a list (to be returned) and made into a dictionary
+    # during multiprocessing (see formatPDB_db function)
+
+    # outList = [] # this is a list of lists
+    ## do nothing no chains found
     if len(list(structure.get_chains())) < int(1):
         os.remove(pdbFile)
+    ## append chain "_A" if only 1 chain
     if len(list(structure.get_chains())) == int(1):
-        pass
+        # print("single:" + str(len(list(structure.get_chains()))))
+        for chain in structure.get_chains():
+        # chain = list(structure.get_chains())[0]:
+            if len(chain) == 0:
+                pass
+            if len(chain) > 0:
+                # for residue in chain:
+                # print(chain.get_residues())
+                length = len(list(chain.get_residues()))
+                outName = pdbFile.rstrip(".pdb") + "_" + chain.id.upper() + ".pdb"
+                outList.append([outName, length])
+                # print("[extractPdbChains1] write: " + outName)
+                io = PDBIO()
+                io.set_structure(structure)
+                io.save(outName, SelectChain(chain))
+        os.remove(pdbFile)
+
     ## if > 1 chain, separate, write, and delete parent pdb
     if len(list(structure.get_chains())) > int(1):
+        # print("multi:" + str(len(list(structure.get_chains()))))
         for chain in structure.get_chains():
             if len(chain) == 0:
                 pass
             if len(chain) > 0:
                 # for residue in chain:
                 # print(chain.get_residues())
+                length = len(list(chain.get_residues()))
                 outName = pdbFile.rstrip(".pdb") + "_" + chain.id.upper() + ".pdb"
-                # print("[extractPdbChains] write: " + outName)
+                outList.append([outName, length])
+                # print("[extractPdbChainsMult] write: " + outName)
                 io = PDBIO()
                 io.set_structure(structure)
                 io.save(outName, SelectChain(chain))
         os.remove(pdbFile)
+    # return(outList)
 
 def extractPDB(filename, root, newDir):
     import shutil
@@ -197,6 +226,7 @@ def formatPDB_db(dbLocation, cores):
                     proc.join()
 
     ### multiprocess extract individual chains from the pdb files
+    # and write file-length conversion table
     pdbFiles = glob.glob(newDir+"/*.pdb")
     batchDict = {}
     b = 1
@@ -206,6 +236,8 @@ def formatPDB_db(dbLocation, cores):
         b = b + 1
     # print(batchDict)
 
+    manager = mp.Manager()
+    outList = manager.list()
     for key, values in batchDict.items():
         # print("[extractChains]: Processing batch ", key, " of ", len(batchDict))
         procs = []
@@ -218,25 +250,45 @@ def formatPDB_db(dbLocation, cores):
                 # print(inputPDB)
                 # single argument requires a "," after
                 # see: https://stackoverflow.com/questions/1559125/string-arguments-in-python-multiprocessing
-                p = mp.Process(target=extractPdbChains, args=(pdbFile,))
+                p = mp.Process(target=extractPdbChains, args=(pdbFile, outList))
                 procs.append(p)
                 # print(p)
                 p.start()
             for proc in procs:
                 proc.join()
 
-    ### generate list of pdb files for FATCATSearch
-    pdbFiles = glob.glob(newDir+"/*.pdb")
-    # print(len(pdbFiles))
-    # for pdbFile in pdbFiles:
-
-    outList = open(newDir+"/FATCAT_list_"+str( date.today() )+".list", "w")
-    for file in pdbFiles:
+    ### convert list of list to dictionary (eliminate duplicate chains from NMR structures)
+    outDict = {}
+    for sublist in outList:
+        # print(sublist)
+        outDict[sublist[0]] = sublist[1]
+    # print(outDict)
+    print(len(outDict))
+    outList = open(newDir+"/pdbLengths.tsv", "w")
+    for file, length in outDict.items():
         # print(file)
         # print(os.path.basename(file))
         # outList.write(os.path.basename(file).rstrip(".pdb")+"\n")
-        outList.write(file+"\n")
+        outList.write("%1s\t%2s\n" % (file, length))
     outList.close()
+
+
+
+
+
+
+    ### generate list of pdb files for FATCATSearch
+    # pdbFiles = glob.glob(newDir+"/*.pdb")
+    # print(len(pdbFiles))
+    # for pdbFile in pdbFiles:
+
+    # outList = open(newDir+"/FATCAT_list_"+str( date.today() )+".list", "w")
+    # for file in pdbFiles:
+    #     # print(file)
+    #     # print(os.path.basename(file))
+    #     # outList.write(os.path.basename(file).rstrip(".pdb")+"\n")
+    #     outList.write(file+"\n")
+    # outList.close()
 
 
 
