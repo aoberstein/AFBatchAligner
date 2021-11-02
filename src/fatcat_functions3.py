@@ -31,7 +31,7 @@ def filterPDB(file, cutoff):
     id = os.path.basename(file).rstrip(".pdb")
     outPrefix = file.rstrip(".pdb")+"_bFILT-"+str(cutoff)+".pdb"
     # print("[OUTPUT]: "+outPrefix)
-    pdb = PDBParser().get_structure(id, file)
+    pdb = PDBParser(QUIET=True).get_structure(id, file)
     io = PDBIO()
     io.set_structure(pdb)
     io.save(outPrefix, Select())
@@ -68,7 +68,7 @@ def extractPdbChains(pdbFile, outList):
                 return 0
 
     id = os.path.basename(pdbFile).rstrip(".pdb")
-    structure = PDBParser().get_structure(id, pdbFile)
+    structure = PDBParser(QUIET=True).get_structure(id, pdbFile)
 
     ### Remove all non-amino acid residues
     ### remove chains with only hetatms (small molecules)
@@ -150,7 +150,12 @@ def extractPDB(filename, root, newDir):
         # print(filename)
         ### strip "pdb" prefix
         name = filename.lstrip('pdb').upper()
-        outfile = newDir+"/"+name.rstrip('.ENT.GZ')+".pdb"
+        # print(name)
+        newName = re.sub(".ENT.GZ", ".pdb", name)
+        # print(newName)
+        # outfile = newDir+"/"+name.rstrip('.ENT.GZ')+".pdb"
+        outfile = newDir + "/" + newName
+        # print(outfile)
         with gzip.open(file, 'rb') as f_in:
             with open(outfile, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
@@ -257,13 +262,13 @@ def formatPDB_db(dbLocation, cores):
             for proc in procs:
                 proc.join()
 
-    ### convert list of list to dictionary (eliminate duplicate chains from NMR structures)
+    ### convert list of lists to dictionary (eliminate duplicate chains from NMR structures)
     outDict = {}
     for sublist in outList:
         # print(sublist)
         outDict[sublist[0]] = sublist[1]
     # print(outDict)
-    print(len(outDict))
+    print("[formatDB] Writing " + str(len(outDict)) + " files to length list")
     outList = open(newDir+"/pdbLengths.tsv", "w")
     for file, length in outDict.items():
         # print(file)
@@ -271,25 +276,6 @@ def formatPDB_db(dbLocation, cores):
         # outList.write(os.path.basename(file).rstrip(".pdb")+"\n")
         outList.write("%1s\t%2s\n" % (file, length))
     outList.close()
-
-
-
-
-
-
-    ### generate list of pdb files for FATCATSearch
-    # pdbFiles = glob.glob(newDir+"/*.pdb")
-    # print(len(pdbFiles))
-    # for pdbFile in pdbFiles:
-
-    # outList = open(newDir+"/FATCAT_list_"+str( date.today() )+".list", "w")
-    # for file in pdbFiles:
-    #     # print(file)
-    #     # print(os.path.basename(file))
-    #     # outList.write(os.path.basename(file).rstrip(".pdb")+"\n")
-    #     outList.write(file+"\n")
-    # outList.close()
-
 
 
 def jFatCatAlign(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
