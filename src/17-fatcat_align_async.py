@@ -13,6 +13,7 @@ def main():
 
     queryFiles = glob.glob("/home/adam/archive/intellij-workspace/test_area/db/" +
                             "FATCATdb_2021-10-22/*UL148_bFILT-30.0.pdb")
+    queryFiles.append("")
 
     FCJar = str("/home/adam/archive/intellij-workspace/aofatcat_project/out/artifacts/aofatcat.jar/" +
                       "aofatcat_project.jar")

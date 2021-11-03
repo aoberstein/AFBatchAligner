@@ -3,9 +3,19 @@ import os
 import re
 import shutil
 
-AF_output_root = "/home/adam/nvme/alphafold_output_sync"
-inputDir = "/mnt/nvme_scratch/2021-10-04_fatcat_HCMV_self_to_self_run1/input"
-dbDir = "/mnt/nvme_scratch/2021-10-04_fatcat_HCMV_self_to_self_run1/db"
+# target files to be renamed/formatted
+#AF_output_root = "/home/adam/nvme/alphafold_output_sync"
+AF_output_root = "/home/adam/archive/af_alignments/HHV6A_U1102"
+
+# fatcat input directory to hold query files, which will be filtered by b-value next
+dbDir = "/home/adam/archive/af_alignments/HHV6A_U1102/fatcat_queries"
+
+# check that dbDir exists and create if absent
+if os.path.exists(dbDir):
+    pass
+else:
+    os.mkdir(dbDir, mode = 0o755)
+
 
 for root, dirs, files in os.walk(AF_output_root):
     # for dir in dirs:
@@ -19,6 +29,5 @@ for root, dirs, files in os.walk(AF_output_root):
           # print(root)
           # print(file)
           # print(genePrefix)
-          print(inputDir+"/"+genePrefix+".pdb")
-          shutil.copy(file, inputDir+"/"+genePrefix+".pdb")
+          print(dbDir+"/"+genePrefix+".pdb")
           shutil.copy(file, dbDir+"/"+genePrefix+".pdb")
