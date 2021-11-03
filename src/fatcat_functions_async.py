@@ -285,6 +285,12 @@ def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
         cores = cores
 
     ### create output subdirectories
+    # check for outputDir and create if absent
+    if os.path.exists(outputDir):
+        pass
+    else:
+        os.mkdir(outputDir, mode = 0o755)
+
     # query = os.basename(queryPDB)
     queryPrefix = os.path.basename(queryPDB).rstrip(".pdb")
     subDir = outputDir+"/"+queryPrefix

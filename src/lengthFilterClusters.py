@@ -27,7 +27,7 @@ def lengthFilter(clusterList, lengthToPdbTSV, maxLength):
         # print(pdb)
         if pdb in lengthDict.keys():
             # print(lengthDict[pdb])
-            outFile.write(pdb + "\n")
+            outFile.write(root + "/" + pdb + "\n")
     outFile.close()
 
 
