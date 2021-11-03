@@ -1,15 +1,14 @@
 #!/usr/bin/python3
 
-from pdbTools import checkFolderBackslash
-from pdbTools2 import exportPdbToLengths
+from pdbTools import exportPdbToLengths
 
 
 def main():
 
     # ## format clusters (append dbDir folder to first pdb in each cluster)
-    # clusterFile = "/home/adam/archive/db/pdb/2021-10-26/pdb_clusters/bc-40.out"
-    # dbDir = "/home/adam/archive/db/pdb/2021-10-26/FATCATdb_2021-10-28"
-    # extractPdbClusters(clusterFile, dbDir)
+    clusterFile = "/home/adam/archive/db/pdb/2021-10-26/pdb_clusters/bc-40.out"
+    dbDir = "/home/adam/archive/db/pdb/2021-10-26/FATCATdb_2021-10-28"
+    extractPdbClusters(clusterFile, dbDir)
 
 
     # ## format pdb database (exclude all non-AA residues and chains)
