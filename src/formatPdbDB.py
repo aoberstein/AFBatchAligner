@@ -1,6 +1,9 @@
-##
-##
-###### functions #################################################
+'''
+functions to format the pdb database
+1) extract to new folder
+2) extract individual chains
+3) write pdbFile to length conversion table
+'''
 
 def filterPDB(file, cutoff):
     ### see: https://biopython-cn.readthedocs.io/zh_CN/latest/en/chr11.html
@@ -8,7 +11,7 @@ def filterPDB(file, cutoff):
     from Bio.PDB.PDBParser import PDBParser
     from Bio.PDB.PDBIO import PDBIO
     import os
-    
+
     #custom select
     class Select():
         def accept_model(self, model):
@@ -16,12 +19,12 @@ def filterPDB(file, cutoff):
         def accept_chain(self, chain):
             return True
         def accept_residue(self, residue):
-            return True       
+            return True
         def accept_atom(self, atom):
             # print("atom id:" + atom.get_id())
             # print("atom name:" + atom.get_name())
-            if atom.get_bfactor() >= cutoff:  
-                # print("True") 
+            if atom.get_bfactor() >= cutoff:
+                # print("True")
                 return True
             else:
                 # print("Filtering: "+atom.get_id(), atom.get_bfactor(),
@@ -31,15 +34,18 @@ def filterPDB(file, cutoff):
     id = os.path.basename(file).rstrip(".pdb")
     outPrefix = file.rstrip(".pdb")+"_bFILT-"+str(cutoff)+".pdb"
     # print("[OUTPUT]: "+outPrefix)
-    pdb = PDBParser().get_structure(id, file)
+    pdb = PDBParser(QUIET=True).get_structure(id, file)
     io = PDBIO()
     io.set_structure(pdb)
     io.save(outPrefix, Select())
-    
 
-def extractPdbChains(pdbFile):
+
+def extractPdbChains(pdbFile, outList):
     '''
     Note: removes original PDB file if multiple chains are found.
+    Therefore, first extract PDB files to a new directory to avoid deleting originals
+    Note: NMR structures will appear as multiple chains due to the overlayed models
+    These will be reduced to one model (last model through overwriting)
     '''
 
     ## helper function for "formatPDB_db"
@@ -65,14 +71,14 @@ def extractPdbChains(pdbFile):
                 return 0
 
     id = os.path.basename(pdbFile).rstrip(".pdb")
-    structure = PDBParser().get_structure(id, pdbFile)
+    structure = PDBParser(QUIET=True).get_structure(id, pdbFile)
 
     ### Remove all non-amino acid residues
     ### remove chains with only hetatms (small molecules)
     ### remove water molecules
     ### remove nucleic acids
     aaList = ['ALA','CYS','ASP','GLU','PHE','GLY','HIS','ILE','LYS','LEU','MET','ASN','PRO','GLN',
-                           'ARG','SER','THR','VAL','TRP','TYR']
+              'ARG','SER','THR','VAL','TRP','TYR']
     model = structure[0]
     residue_to_remove = []
     chain_to_remove = []
@@ -80,7 +86,7 @@ def extractPdbChains(pdbFile):
         for residue in chain:
             if residue.get_resname() not in aaList:
                 # print(residue.get_resname())
-            # if residue.id[0] != ' ':
+                # if residue.id[0] != ' ':
                 residue_to_remove.append((chain.id, residue.id))
         if len(chain) == 0:
             chain_to_remove.append(chain.id)
@@ -89,25 +95,51 @@ def extractPdbChains(pdbFile):
     for chain in chain_to_remove:
         model.detach_child(chain)
 
-    ## do nothing if only 1 chain
+    ### wtite chains to pdb file
+    # write chain lengths to a list (to be returned) and made into a dictionary
+    # during multiprocessing (see formatPDB_db function)
+
+    # outList = [] # this is a list of lists
+    ## do nothing no chains found
     if len(list(structure.get_chains())) < int(1):
         os.remove(pdbFile)
+    ## append chain "_A" if only 1 chain
     if len(list(structure.get_chains())) == int(1):
-        pass
+        # print("single:" + str(len(list(structure.get_chains()))))
+        for chain in structure.get_chains():
+            # chain = list(structure.get_chains())[0]:
+            if len(chain) == 0:
+                pass
+            if len(chain) > 0:
+                # for residue in chain:
+                # print(chain.get_residues())
+                length = len(list(chain.get_residues()))
+                outName = pdbFile.rstrip(".pdb") + "_" + chain.id.upper() + ".pdb"
+                outList.append([outName, length])
+                # print("[extractPdbChains1] write: " + outName)
+                io = PDBIO()
+                io.set_structure(structure)
+                io.save(outName, SelectChain(chain))
+        os.remove(pdbFile)
+
     ## if > 1 chain, separate, write, and delete parent pdb
     if len(list(structure.get_chains())) > int(1):
+        # print("multi:" + str(len(list(structure.get_chains()))))
         for chain in structure.get_chains():
             if len(chain) == 0:
                 pass
             if len(chain) > 0:
                 # for residue in chain:
                 # print(chain.get_residues())
+                length = len(list(chain.get_residues()))
                 outName = pdbFile.rstrip(".pdb") + "_" + chain.id.upper() + ".pdb"
-                # print("[extractPdbChains] write: " + outName)
+                outList.append([outName, length])
+                # print("[extractPdbChainsMult] write: " + outName)
                 io = PDBIO()
                 io.set_structure(structure)
                 io.save(outName, SelectChain(chain))
         os.remove(pdbFile)
+    # return(outList)
 
 def extractPDB(filename, root, newDir):
     import shutil
@@ -121,7 +153,12 @@ def extractPDB(filename, root, newDir):
         # print(filename)
         ### strip "pdb" prefix
         name = filename.lstrip('pdb').upper()
-        outfile = newDir+"/"+name.rstrip('.ENT.GZ')+".pdb"
+        # print(name)
+        newName = re.sub(".ENT.GZ", ".pdb", name)
+        # print(newName)
+        # outfile = newDir+"/"+name.rstrip('.ENT.GZ')+".pdb"
+        outfile = newDir + "/" + newName
+        # print(outfile)
         with gzip.open(file, 'rb') as f_in:
             with open(outfile, 'wb') as f_out:
                 shutil.copyfileobj(f_in, f_out)
@@ -197,6 +234,7 @@ def formatPDB_db(dbLocation, cores):
                     proc.join()
 
     ### multiprocess extract individual chains from the pdb files
+    # and write file-length conversion table
     pdbFiles = glob.glob(newDir+"/*.pdb")
     batchDict = {}
     b = 1
@@ -206,6 +244,8 @@ def formatPDB_db(dbLocation, cores):
         b = b + 1
     # print(batchDict)
 
+    manager = mp.Manager()
+    outList = manager.list()
     for key, values in batchDict.items():
         # print("[extractChains]: Processing batch ", key, " of ", len(batchDict))
         procs = []
@@ -218,117 +258,24 @@ def formatPDB_db(dbLocation, cores):
                 # print(inputPDB)
                 # single argument requires a "," after
                 # see: https://stackoverflow.com/questions/1559125/string-arguments-in-python-multiprocessing
-                p = mp.Process(target=extractPdbChains, args=(pdbFile,))
+                p = mp.Process(target=extractPdbChains, args=(pdbFile, outList))
                 procs.append(p)
                 # print(p)
                 p.start()
             for proc in procs:
                 proc.join()
 
-    ### generate list of pdb files for FATCATSearch
-    pdbFiles = glob.glob(newDir+"/*.pdb")
-    # print(len(pdbFiles))
-    # for pdbFile in pdbFiles:
-
-    outList = open(newDir+"/FATCAT_list_"+str( date.today() )+".list", "w")
-    for file in pdbFiles:
+    ### convert list of lists to dictionary (eliminate duplicate chains from NMR structures)
+    outDict = {}
+    for sublist in outList:
+        # print(sublist)
+        outDict[sublist[0]] = sublist[1]
+    # print(outDict)
+    print("[formatDB] Writing " + str(len(outDict)) + " files to length list")
+    outList = open(newDir+"/pdbLengths.tsv", "w")
+    for file, length in outDict.items():
         # print(file)
         # print(os.path.basename(file))
         # outList.write(os.path.basename(file).rstrip(".pdb")+"\n")
-        outList.write(file+"\n")
+        outList.write("%1s\t%2s\n" % (file, length))
     outList.close()
-
-
-
-def jFatCatAlign(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
-                 outputDir, alignmentCutoff = 0.05):
-    import os
-    import subprocess
-    if os.path.exists(outputDir):
-        pass
-    else:
-        os.mkdir(outputDir, mode = 0o755)
-    proc = subprocess.Popen([javaFullPath, '-jar', aoFatCatJar,
-                             queryPDB, targetPDB, str(alignmentCutoff), outputDir],
-                            bufsize=-1)
-    code=proc.wait()
-    # if str(code) == '0':
-        # print("[jFatCatAlign]: Success")
-    # else:
-        # print("[jFatCatAlign]: Failed")
-
-
-def fatcatMultiProcess(queryPDB, targetPDBList, javaFullPath, aoFatCatJar,
-                       outputDir, alignmentCutoff = 0.05, cores = 4):
-    import multiprocessing as mp
-    import os
-    import sys
-    ### create batches list
-    if cores >= int(mp.cpu_count()):
-        optCores = int(mp.cpu_count())-1
-        # print("Too many cores selected")
-        # print("Reducing to " + str(optCores) + " cores")
-        cores = optCores
-    if cores < int(mp.cpu_count()):
-        cores = cores     
-    file = open(targetPDBList, 'r')
-    lines = file.readlines()
-    lines2 = []
-    for line in lines:
-        line = line.rstrip("\n")
-        lines2.append(line)
-    batchDict = {}
-    b = 1
-    for i in range(0, len(lines2), cores):
-        batchName = "b"+str(b)
-        batchDict[batchName] = lines2[i:i + cores]
-        b = b + 1
-    # print(batchDict)
-    file.close()
-    
-    ### create output subdirectories
-    # query = os.basename(queryPDB)
-    queryPrefix = os.path.basename(queryPDB).rstrip(".pdb")
-    subDir = outputDir+"/"+queryPrefix
-    if os.path.exists(subDir):
-        pass
-    else:
-        os.mkdir(subDir, mode = 0o755)
-    
-    ### multiprocess with fatcat
-    for key, values in batchDict.items():
-        for targetPDB in values:
-            if "6JXR_N.pdb" in targetPDB:
-                print("[renderPdbBatch]: Processing batch ", key, " of ", len(batchDict))
-
-        # print("[renderPdbBatch]: Processing batch ", key, " of ", len(batchDict))
-
-        # if key == "b1":
-        #     print(key, values)
-        # if key:
-        #     for targetPDB in values:
-        #         print(targetPDB)
-
-        # if key:
-        #     procs = []
-        #     for targetPDB in values:
-                # print(targetPDB)
-            #     targetPDB = targetPDB.strip()
-            #     with open(os.devnull, 'w') as devnull:
-            #         # suppress stdout
-            #         orig_stdout_fno = os.dup(sys.stdout.fileno())
-            #         os.dup2(devnull.fileno(), 1)
-            #         # suppress stderr
-            #         orig_stderr_fno = os.dup(sys.stderr.fileno())
-            #         os.dup2(devnull.fileno(), 2)
-            #         p = mp.Process(target=jFatCatAlign,
-            #                        args=(queryPDB, targetPDB, javaFullPath, aoFatCatJar,
-            #                              subDir, alignmentCutoff))
-            #         procs.append(p)
-            #         # print(procs)
-            #         p.start()
-            #         os.dup2(orig_stdout_fno, 1)  # restore stdout
-            #         os.dup2(orig_stderr_fno, 2)  # restore stderr
-            # for proc in procs:
-            #     proc.join()
-
