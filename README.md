@@ -1,4 +1,4 @@
-# Align alphafold predicitons using biojava fatcat-flexible aligner
+# Align alphafold predictions using biojava fatcat-flexible aligner
 
 1) download pdb db to local directory
     downloadPdbDB.downloadPdbDB
